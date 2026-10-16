@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:uuid/uuid.dart';
 import '../../../data/models/auxiliary_exercise.dart';
 import '../../../data/models/belt_rank.dart';
 import '../../../data/models/taf_test_type.dart';
@@ -187,13 +189,86 @@ class TafViewModel extends ChangeNotifier {
   Future<void> addCustomAuxiliaryExercise(AuxiliaryExercise exercise) async {
     _auxiliaryExercises.add(exercise);
     notifyListeners();
-    await _repository.addCustomExercise(exercise);
+    await _repository.addAuxiliaryExercise(exercise);
   }
 
-  Future<void> deleteCustomAuxiliaryExercise(String id) async {
-    _auxiliaryExercises.removeWhere((e) => e.id == id && e.isCustom);
+  Future<void> updateAuxiliaryExercise(AuxiliaryExercise exercise) async {
+    final index = _auxiliaryExercises.indexWhere((e) => e.id == exercise.id);
+    if (index != -1) {
+      _auxiliaryExercises[index] = exercise;
+      notifyListeners();
+      await _repository.updateAuxiliaryExercise(exercise);
+    }
+  }
+
+  Future<void> deleteAuxiliaryExercise(String id) async {
+    _auxiliaryExercises.removeWhere((e) => e.id == id);
     notifyListeners();
-    await _repository.deleteCustomExercise(id);
+    await _repository.deleteAuxiliaryExercise(id);
+  }
+
+  Future<void> deleteCustomAuxiliaryExercise(String id) =>
+      deleteAuxiliaryExercise(id);
+
+  String exportAuxiliaryExercisesJson() {
+    final jsonList = _auxiliaryExercises.map((e) => e.toJson()).toList();
+    const encoder = JsonEncoder.withIndent('  ');
+    return encoder.convert(jsonList);
+  }
+
+  Future<int> importAuxiliaryExercisesFromJson(
+    String jsonStr, {
+    bool replaceAll = false,
+  }) async {
+    final dynamic decoded = jsonDecode(jsonStr);
+    List<dynamic> list;
+    if (decoded is List) {
+      list = decoded;
+    } else if (decoded is Map<String, dynamic> && decoded['exercises'] is List) {
+      list = decoded['exercises'] as List<dynamic>;
+    } else {
+      throw const FormatException(
+        'O formato JSON deve ser uma lista de exercícios ou um objeto com a chave "exercises".',
+      );
+    }
+
+    final importedExercises = <AuxiliaryExercise>[];
+    for (var item in list) {
+      if (item is Map<String, dynamic>) {
+        var ex = AuxiliaryExercise.fromJson(item);
+        if (ex.id.trim().isEmpty) {
+          ex = ex.copyWith(id: const Uuid().v4());
+        }
+        importedExercises.add(ex);
+      }
+    }
+
+    if (importedExercises.isEmpty) {
+      throw const FormatException(
+        'Nenhum exercício válido foi encontrado no JSON fornecido.',
+      );
+    }
+
+    if (replaceAll) {
+      _auxiliaryExercises = List.from(importedExercises);
+    } else {
+      final Map<String, AuxiliaryExercise> map = {
+        for (var e in _auxiliaryExercises) e.id: e,
+      };
+      for (var e in importedExercises) {
+        map[e.id] = e;
+      }
+      _auxiliaryExercises = map.values.toList();
+    }
+
+    notifyListeners();
+    await _repository.saveAuxiliaryExercises(_auxiliaryExercises);
+    return importedExercises.length;
+  }
+
+  Future<void> restoreDefaultAuxiliaryExercises() async {
+    _auxiliaryExercises = await _repository.restoreDefaultExercises();
+    notifyListeners();
   }
 
   Future<void> resetAllData() async {

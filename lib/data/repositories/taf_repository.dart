@@ -39,17 +39,39 @@ class TafRepository {
   Future<List<AuxiliaryExercise>> getAuxiliaryExercises() =>
       _storage.loadAuxiliaryExercises();
 
-  Future<void> addCustomExercise(AuxiliaryExercise exercise) async {
+  Future<void> saveAuxiliaryExercises(List<AuxiliaryExercise> exercises) =>
+      _storage.saveAuxiliaryExercises(exercises);
+
+  Future<void> addAuxiliaryExercise(AuxiliaryExercise exercise) async {
     final current = await _storage.loadAuxiliaryExercises();
     final updated = [...current, exercise];
     await _storage.saveAuxiliaryExercises(updated);
   }
 
-  Future<void> deleteCustomExercise(String id) async {
+  Future<void> addCustomExercise(AuxiliaryExercise exercise) =>
+      addAuxiliaryExercise(exercise);
+
+  Future<void> updateAuxiliaryExercise(AuxiliaryExercise exercise) async {
     final current = await _storage.loadAuxiliaryExercises();
-    current.removeWhere((e) => e.id == id && e.isCustom);
+    final index = current.indexWhere((e) => e.id == exercise.id);
+    if (index != -1) {
+      current[index] = exercise;
+    } else {
+      current.add(exercise);
+    }
     await _storage.saveAuxiliaryExercises(current);
   }
+
+  Future<void> deleteAuxiliaryExercise(String id) async {
+    final current = await _storage.loadAuxiliaryExercises();
+    current.removeWhere((e) => e.id == id);
+    await _storage.saveAuxiliaryExercises(current);
+  }
+
+  Future<void> deleteCustomExercise(String id) => deleteAuxiliaryExercise(id);
+
+  Future<List<AuxiliaryExercise>> restoreDefaultExercises() =>
+      _storage.resetDefaultAuxiliaryExercises();
 
   Future<void> resetAllData() => _storage.clearAllData();
 }

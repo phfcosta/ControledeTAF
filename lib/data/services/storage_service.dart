@@ -72,26 +72,24 @@ class StorageService {
     final defaultList = AuxiliaryExercise.getDefaultExercises();
 
     if (jsonStr == null) {
+      await saveAuxiliaryExercises(defaultList);
       return defaultList;
     }
 
     try {
       final list = jsonDecode(jsonStr) as List<dynamic>;
-      final storedList = list
+      return list
           .map((item) => AuxiliaryExercise.fromJson(item as Map<String, dynamic>))
           .toList();
-
-      // Merge defaults with stored custom exercises
-      final Map<String, AuxiliaryExercise> map = {
-        for (var e in defaultList) e.id: e,
-      };
-      for (var e in storedList) {
-        map[e.id] = e;
-      }
-      return map.values.toList();
     } catch (_) {
       return defaultList;
     }
+  }
+
+  Future<List<AuxiliaryExercise>> resetDefaultAuxiliaryExercises() async {
+    final defaultList = AuxiliaryExercise.getDefaultExercises();
+    await saveAuxiliaryExercises(defaultList);
+    return defaultList;
   }
 
   Future<void> saveAuxiliaryExercises(List<AuxiliaryExercise> exercises) async {

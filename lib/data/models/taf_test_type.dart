@@ -83,8 +83,13 @@ enum TafTestType {
   final String executionStandard;
 
   static TafTestType fromId(String id) {
+    final normalized = id.toLowerCase().replaceAll(RegExp(r'[\s\-_]'), '');
     return TafTestType.values.firstWhere(
-      (t) => t.id == id,
+      (t) {
+        final tIdNorm = t.id.toLowerCase().replaceAll(RegExp(r'[\s\-_]'), '');
+        final tNameNorm = t.name.toLowerCase().replaceAll(RegExp(r'[\s\-_]'), '');
+        return t.id == id || tIdNorm == normalized || tNameNorm == normalized;
+      },
       orElse: () => TafTestType.corrida,
     );
   }

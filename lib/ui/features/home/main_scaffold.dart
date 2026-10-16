@@ -55,11 +55,10 @@ class _MainScaffoldState extends State<MainScaffold> {
     final activeIndex = _currentIndex.clamp(0, 4);
 
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: screens,
-      ),
-      floatingActionButton: _currentIndex != 4 // Hide on timer screen
+      body: IndexedStack(index: _currentIndex, children: screens),
+      floatingActionButton:
+          _currentIndex !=
+              4 // Hide on timer screen
           ? FloatingActionButton(
               backgroundColor: AppTheme.primaryBlue,
               foregroundColor: Colors.white,
